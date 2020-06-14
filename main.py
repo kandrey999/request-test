@@ -18,9 +18,16 @@ def create_product(product):
             # #price = price.replace(' ', '')
             # price = price.replace(chr(160), '')
             # price = int(price)
-            cursor.execute('insert into recorders values(?,?,?)', (product.brand.strip(' /'), product.good, int(product.price.replace(chr(160), '').replace(chr(8381), ''))))
+            #cursor.execute('insert into recorders values(?,?,?)', (product.brand.strip(' /'), product.good, int(product.price.replace(chr(160), '').replace(chr(8381), ''))))
     except sqlite3.OperationalError as e:
         print(product, e)
+
+
+def create_pages(pages):
+    with sqlite3.connect(r'E:\Tutorial\Python\wildberries.db') as conn:
+        cursor = conn.cursor()
+        cursor.executemany('insert into recorders values(?,?,?)', pages)
+
 
 
 def clear_db():
@@ -50,12 +57,18 @@ def main():
     soup = BeautifulSoup(r.content)
     # print(re.sub(r'\n+', r'\n', soup.text))
     count_pages = len(soup.select('.pagination-item'))
-    for i in range(1, 2):
+    pages = []
+    for i in range(1, count_pages + 1):
         r = s.get(f'https://www.wildberries.ru/catalog/elektronika/avtoelektronika?page={i}')
         soup = BeautifulSoup(r.content)
-        goods = (Good(e) for e in soup.select('div.dtList.i-dtList.j-card-item'))
+        goods = soup.select('div.dtList.i-dtList.j-card-item')
         for good in goods:
-            create_product(good)
+            pages.append([good.select_one('strong.brand-name').text, good.select_one('span.goods-name').text, int(good.select_one('.lower-price').text[:-1].replace(chr(160), ''))]) #РАБОТАЕТ БЕЗ INT!
+
+    create_pages(pages)
+        #goods = (Good(e) for e in soup.select('div.dtList.i-dtList.j-card-item'))
+        # for good in goods:
+        #     create_product(good)
 
 
 if __name__ == '__main__':
